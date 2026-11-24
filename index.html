@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SkillRow">
+<meta name="theme-color" content="#0b0d10">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- TV copy of web/index.html: extra scripts + tv.css; markup otherwise unchanged -->
+<title>SkillRow</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="tv.css">
+<link rel="icon" type="image/png" href="icon-192.png">
+</head>
+<body>
+<header id="topbar">
+  <div class="brand">SkillRow</div>
+  <nav class="tabs">
+    <button data-view="live" class="tab active">Row</button>
+    <button data-view="history" class="tab">History</button>
+  </nav>
+  <div id="wo-label" class="wo-label">Machine totals</div>
+  <div class="spacer"></div>
+  <button id="btn-setup" class="btn primary">New workout</button>
+  <button id="btn-end" class="btn danger" hidden>End</button>
+  <div class="conn">
+    <span id="conn-ws" class="dot" title="Server"></span>
+    <span id="conn-rower" class="conn-item"><span class="dot"></span><span class="lbl">Rower</span></span>
+    <span id="conn-hr" class="conn-item"><span class="dot"></span><span class="lbl">HR</span></span>
+  </div>
+  <button id="btn-fs" class="btn icon" title="Full screen (F)">&#x26F6;</button>
+</header>
+
+<main id="live" class="view">
+  <section id="race-wrap" hidden>
+    <div id="race-container"></div>
+    <div id="race-missing" class="race-missing" hidden>Race module (race.js) not loaded. Racing against the clock only.</div>
+  </section>
+
+  <section id="tiles">
+    <div class="tile hero" id="t-pace">
+      <div class="label">Pace <small>/500m</small></div>
+      <div class="value" id="v-pace">--:--</div>
+      <div class="sub">avg <span id="a-pace">--:--</span> <span id="v-vs" class="vs"></span></div>
+    </div>
+    <div class="tile" id="t-elapsed">
+      <div class="label">Time</div>
+      <div class="value" id="v-elapsed">0:00</div>
+      <div class="sub" id="s-elapsed">&nbsp;</div>
+    </div>
+    <div class="tile" id="t-distance">
+      <div class="label">Distance <small>m</small></div>
+      <div class="value" id="v-distance">0</div>
+      <div class="sub" id="s-distance">&nbsp;</div>
+    </div>
+    <div class="tile" id="t-power">
+      <div class="label">Power <small>W</small></div>
+      <div class="value" id="v-power">--</div>
+      <div class="sub">avg <span id="a-power">--</span></div>
+    </div>
+    <div class="tile" id="t-spm">
+      <div class="label">Rate <small>spm</small></div>
+      <div class="value" id="v-spm">--</div>
+      <div class="sub">avg <span id="a-spm">--</span></div>
+    </div>
+    <div class="tile" id="t-hr">
+      <div class="label">Heart <small>bpm</small></div>
+      <div class="value" id="v-hr">--</div>
+      <div class="sub">max <span id="a-hr">--</span></div>
+    </div>
+    <div class="tile" id="t-cal">
+      <div class="label">Calories <small>kcal</small></div>
+      <div class="value" id="v-cal">0</div>
+      <div class="sub"><span id="a-cal">--</span> kcal/h</div>
+    </div>
+    <div class="tile" id="t-split">
+      <div class="label" id="l-split">Split</div>
+      <div class="value" id="v-split">--:--</div>
+      <div class="sub" id="s-split">&nbsp;</div>
+    </div>
+    <div class="tile" id="t-strokes">
+      <div class="label">Strokes</div>
+      <div class="value" id="v-strokes">0</div>
+      <div class="sub">level <span id="a-res">--</span> &middot; <span id="a-dps">--</span> m/str</div>
+    </div>
+  </section>
+
+  <aside id="side">
+    <div id="wo-panel" class="panel" hidden>
+      <div class="wo-head">
+        <span id="wo-title">Workout</span>
+        <span id="wo-phase" class="phase"></span>
+      </div>
+      <div id="wo-remaining" class="remaining">--</div>
+      <div class="remaining-lbl" id="wo-remaining-lbl">remaining</div>
+      <div class="progress"><div id="wo-bar" class="bar"></div></div>
+      <div id="wo-proj" class="proj"></div>
+    </div>
+    <div id="idle-panel" class="panel">
+      <div class="idle-msg">Showing the rower's own session totals.</div>
+      <div class="quick">
+        <button class="btn primary big" id="btn-quick-free">Just row</button>
+        <button class="btn big" id="btn-quick-2k">2000 m</button>
+        <button class="btn big" id="btn-quick-race">Race</button>
+      </div>
+    </div>
+    <div class="panel splits-panel">
+      <div class="panel-title">Splits <span id="split-len-lbl"></span></div>
+      <div class="splits-scroll">
+        <table class="splits" id="splits-table">
+          <thead><tr><th>#</th><th>Dist</th><th>Split</th><th>Pace</th><th>W</th><th>spm</th><th>HR</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </aside>
+
+  <section id="charts">
+    <div class="chart-box">
+      <div class="chart-title">Force curve <span id="force-peak"></span></div>
+      <canvas id="c-force"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title"><span class="key pace">Pace</span> <span class="key power">Power</span> <span class="muted">last <span id="trend-min">5</span> min</span></div>
+      <canvas id="c-trend"></canvas>
+    </div>
+  </section>
+</main>
+
+<main id="history" class="view" hidden>
+  <div class="hist-list panel">
+    <div class="panel-title">Past sessions <button class="btn small" id="btn-hist-refresh">Refresh</button></div>
+    <div id="hist-items" class="hist-items"></div>
+  </div>
+  <div class="hist-detail panel" id="hist-detail">
+    <div class="muted">Select a session.</div>
+  </div>
+</main>
+
+<!-- Workout setup -->
+<div id="setup" class="overlay" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h2>New workout</h2>
+      <button class="btn icon" data-close>&times;</button>
+    </div>
+    <div class="seg" id="mode-seg">
+      <button data-mode="free">Just row</button>
+      <button data-mode="distance">Distance</button>
+      <button data-mode="time">Time</button>
+      <button data-mode="calories">Calories</button>
+      <button data-mode="interval">Intervals</button>
+      <button data-mode="race">Race</button>
+    </div>
+    <div id="setup-body"></div>
+    <div class="setup-common">
+      <label>Target pace /500m <input id="in-target" placeholder="e.g. 2:05 (optional)" size="10"></label>
+      <label>Split every <select id="in-split">
+        <option value="100">100 m</option><option value="250">250 m</option><option value="500">500 m</option><option value="1000">1000 m</option>
+      </select></label>
+    </div>
+    <div class="modal-foot">
+      <span id="setup-err" class="err"></span>
+      <button class="btn" data-close>Cancel</button>
+      <button class="btn primary big" id="btn-start">Start</button>
+    </div>
+  </div>
+</div>
+
+<!-- Completion -->
+<div id="done" class="overlay" hidden>
+  <div class="modal wide">
+    <div class="modal-head">
+      <h2 id="done-title">Workout complete</h2>
+      <button class="btn icon" data-close>&times;</button>
+    </div>
+    <div id="done-body"></div>
+    <div class="modal-foot">
+      <span id="done-save" class="muted"></span>
+      <button class="btn" id="btn-done-again">Row again</button>
+      <button class="btn primary big" data-close>Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Samsung TV APIs (productinfo, appcommon): only inside a Tizen app -->
+<script>if (typeof tizen !== 'undefined') document.write('<script src="$WEBAPIS/webapis/webapis.js"><\/script>');</script>
+<script src="polyfills.js"></script>
+<script src="ftms.js"></script>
+<script src="sessions-local.js"></script>
+<script src="tv-ui.js"></script>
+<script src="transport-tizen.js"></script>
+<script src="transport-webbluetooth.js"></script>
+<script src="transport.js"></script>
+<script src="race.js"></script>
+<script src="app.js"></script>
+<script src="tvnav.js"></script>
+</body>
+</html>

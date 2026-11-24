@@ -1,0 +1,189 @@
+/* TV overrides on top of style.css: 1920x1080, readable from 2-3 m, remote focus ring, and fallbacks for old
+ * Tizen Chromium (no clamp()/min(), no flex gap before M84, no container queries). Values in vw are tuned for 1920 px. */
+
+html, body { font-size: 22px; }
+body { cursor: default; }
+
+/* ---------- focus: must be obvious from the couch (only while navigating with keys/remote: html.kbnav) ---------- */
+:focus { outline: none; }
+html.kbnav :focus { outline: 5px solid #ffd400 !important; outline-offset: 3px; }
+html.kbnav .btn:focus, html.kbnav .tab:focus, html.kbnav .seg button:focus { box-shadow: 0 0 0 10px rgba(255, 212, 0, .35); position: relative; z-index: 2; transform: scale(1.06); }
+.btn, .tab, .seg button { transition: transform .08s; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+html.kbnav .hist-item:focus { border-color: #ffd400; background: var(--panel2); outline-offset: 0; }
+html.kbnav .opp-list label:focus { background: #2b2a12; }
+html.kbnav [data-scroll]:focus { outline: 4px dashed #ffd400 !important; outline-offset: -4px; }
+input:focus, select:focus { background: #2a2400; outline: 3px solid #ffd400; }
+input.flash, select.flash { background: #5a4d00 !important; }
+
+/* ---------- top bar ---------- */
+#topbar { padding: 10px 24px; gap: 16px; min-height: 84px; }
+.brand { font-size: 32px; }
+.tab { font-size: 26px; padding: 10px 22px; }
+.wo-label { font-size: 26px; }
+.conn { font-size: 20px; }
+.dot { width: 16px; height: 16px; }
+.btn { font-size: 24px; padding: 12px 22px; border-width: 2px; }
+.btn.big { font-size: 28px; padding: 16px 28px; }
+.btn.small { font-size: 20px; padding: 8px 14px; }
+.btn.icon { font-size: 28px; padding: 8px 16px; }
+.btn.step { min-width: 64px; font-size: 30px; font-weight: 700; padding: 6px 14px; line-height: 1.1; }
+/* the bridge/server dot and the rower label only mean something with the WebSocket bridge; the pill shows BLE state */
+html:not(.tr-websocket) #conn-ws, html:not(.tr-websocket) #conn-rower { display: none; }
+#btn-ble { display: flex; align-items: center; gap: 10px; font-size: 22px; white-space: nowrap; }
+#btn-ble.bad { border-color: var(--bad); color: #ffd6d6; }
+#btn-ble.warn { border-color: var(--power); }
+#btn-ble.on { border-color: var(--good); }
+
+/* ---------- live tiles (fixed sizes; clamp()/cq units are not available on older TVs) ---------- */
+@media (min-width: 901px) { #live { grid-template-columns: minmax(0, 1fr) 500px; } #history { grid-template-columns: 560px 1fr; } }
+.tile { padding: 10px 18px; }
+.tile .label { font-size: 24px; }
+.tile .value { font-size: 4.6vw; }
+.tile .sub { font-size: 22px; }
+.tile.hero .value { font-size: 9vw; }
+.tile.hero .sub { font-size: 34px; }
+#live.racing .tile .value { font-size: 3.4vw; }
+#live.racing .tile.hero .value { font-size: 4.4vw; }
+.panel { padding: 14px 18px; }
+.panel-title { font-size: 20px; }
+.wo-head { font-size: 26px; }
+.phase { font-size: 22px; }
+.remaining { font-size: 4.2vw; }
+.remaining-lbl { font-size: 21px; }
+.proj { font-size: 22px; }
+.idle-msg { font-size: 22px; }
+table.splits { font-size: 22px; }
+.chart-title { font-size: 19px; }
+.race-missing { font-size: 26px; }
+
+/* ---------- dialogs ---------- */
+.modal { width: 1180px; max-width: 96vw; max-height: 90vh; padding: 24px 32px; }
+.modal.wide { width: 1500px; }
+.modal.confirm { width: 900px; text-align: center; }
+.modal.confirm h2 { font-size: 36px; margin: 10px 0 20px; line-height: 1.3; }
+.modal.confirm .modal-foot { justify-content: center; }
+.modal-head h2 { font-size: 34px; }
+.seg button { font-size: 24px; padding: 14px 10px; }
+.presets .btn { font-size: 26px; min-width: 130px; }
+input, select { font-size: 26px; padding: 10px 14px; border-width: 2px; }
+input { min-width: 140px; text-align: center; }
+.setup-common { font-size: 22px; }
+.hint { font-size: 20px; }
+.opp-list { max-height: 330px; }
+.opp-list label { font-size: 22px; padding: 12px 14px; }
+.opp-list input[type=checkbox] { width: 26px; height: 26px; }
+.sum-grid .s .k { font-size: 18px; }
+.sum-grid .s .v { font-size: 40px; }
+.race-results { font-size: 24px; }
+canvas.detail-chart { height: 280px; }
+
+/* ---------- history ---------- */
+.hist-item { padding: 14px; border-width: 3px; }
+.hist-item .d { font-size: 19px; }
+.hist-item .m { font-size: 25px; }
+.hist-detail h3 { font-size: 26px; }
+
+/* ---------- BLE banner / panel / legend / hint ---------- */
+#ble-banner { position: fixed; left: 50%; bottom: 78px; transform: translateX(-50%); z-index: 8; max-width: 1500px;
+  background: #3b2a08; border: 3px solid var(--power); color: #fff; border-radius: 16px; padding: 16px 30px; font-size: 30px; text-align: center;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, .6); }
+#ble-banner.bad { background: #3a1416; border-color: var(--bad); }
+#ble-banner span { display: block; font-size: 22px; color: #e8d8b8; margin-top: 6px; }
+.ble-modal { font-size: 21px; }
+#ble-body { max-height: 62vh; overflow-y: auto; }
+table.kv { width: 100%; border-collapse: collapse; }
+table.kv td { padding: 6px 10px; border-top: 1px solid var(--line); vertical-align: top; word-break: break-all; }
+table.kv td:first-child { color: var(--muted); white-space: nowrap; word-break: normal; width: 200px; }
+table.kv.small td { font-size: 19px; }
+table.kv code, .ble-log { font-family: Menlo, "DejaVu Sans Mono", monospace; }
+.ble-log { font-size: 18px; background: var(--bg); padding: 10px; border-radius: 8px; white-space: pre-wrap; margin: 0; }
+#key-legend { display: none; }
+html.tv #key-legend { flex: 0 0 auto; display: flex; gap: 34px; align-items: center; padding: 10px 24px; border-top: 1px solid var(--line);
+  font-size: 20px; color: var(--text); background: var(--bg); }
+#key-legend i { display: inline-block; width: 22px; height: 22px; border-radius: 5px; vertical-align: -4px; margin-right: 8px; }
+#key-legend i.red { background: #e53935; } #key-legend i.green { background: #43a047; }
+#key-legend i.yellow { background: #fdd835; } #key-legend i.blue { background: #1e88e5; }
+#key-legend .muted { margin-left: auto; }
+#tv-hint { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); z-index: 60; display: none;
+  background: #222831; border: 2px solid #ffd400; color: #fff; padding: 14px 26px; border-radius: 12px; font-size: 26px; }
+
+/* ---------- flex gap fallback (Chromium < 84) ---------- */
+.no-flexgap #topbar > * + *, .no-flexgap .tabs > * + *, .no-flexgap .conn > * + *, .no-flexgap .quick > *,
+.no-flexgap .modal-foot > * + *, .no-flexgap .presets > *, .no-flexgap .field > * + *, .no-flexgap .setup-common > * + *,
+.no-flexgap .seg > * + *, .no-flexgap #key-legend > * + *, .no-flexgap #btn-ble > * + * { margin-left: 12px; }
+.no-flexgap .quick > *, .no-flexgap .presets > * { margin: 0 10px 10px 0; }
+.no-flexgap .setup-common label > * + *, .no-flexgap .conn-item > * + * { margin-left: 8px; }
+.no-flexgap .opp-list > * + * { margin-top: 6px; }
+.no-flexgap .opp-list label > * + * { margin-left: 10px; }
+.no-flexgap #side > * + * { margin-top: 10px; }
+.no-flexgap .field { margin: 10px 0; }
+
+/* ---------- Web Bluetooth connect buttons in the banner ---------- */
+.ban-btns { display: flex; gap: 16px; justify-content: center; margin-top: 14px; }
+#ble-banner .ban-btns .btn.big { font-size: 30px; padding: 18px 36px; }
+.modal-foot.wrap { flex-wrap: wrap; }
+body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+
+/* ---------- tablets / laptops (iPad landscape 1024-1366, 16:9 mirroring of those) ---------- */
+@media (max-width: 1599px) {
+  html, body { font-size: 18px; }
+  #topbar { padding: 8px 16px; gap: 12px; min-height: 64px; }
+  .brand { font-size: 24px; }
+  .tab { font-size: 20px; padding: 10px 16px; }
+  .wo-label { font-size: 19px; }
+  .btn { font-size: 19px; padding: 11px 16px; min-height: 48px; }
+  .btn.big { font-size: 22px; padding: 13px 22px; }
+  .btn.small { font-size: 17px; padding: 8px 12px; min-height: 40px; }
+  .btn.icon { font-size: 24px; }
+  .btn.step { min-width: 56px; font-size: 26px; }
+  #btn-ble { font-size: 17px; }
+  .conn { font-size: 16px; }
+  .tile { padding: 6px 12px; }
+  .tile .label { font-size: 16px; }
+  .tile .value { font-size: 5vw; }
+  .tile .sub { font-size: 16px; }
+  .tile.hero .value { font-size: 10vw; }
+  .tile.hero .sub { font-size: 24px; }
+  #live.racing .tile .value { font-size: 3.6vw; }
+  #live.racing .tile.hero .value { font-size: 4.2vw; }
+  .panel-title { font-size: 15px; }
+  .wo-head { font-size: 19px; }
+  .phase { font-size: 16px; }
+  .remaining { font-size: 4.4vw; }
+  .remaining-lbl, .proj, .idle-msg { font-size: 16px; }
+  table.splits { font-size: 16px; }
+  .chart-title { font-size: 14px; }
+  .modal { width: 94vw; max-width: 1100px; padding: 18px 22px; }
+  .modal.wide { width: 96vw; max-width: 1300px; }
+  .modal.confirm { width: 80vw; max-width: 760px; }
+  .modal.confirm h2 { font-size: 28px; }
+  .modal-head h2 { font-size: 26px; }
+  .seg button { font-size: 19px; padding: 12px 8px; min-height: 48px; }
+  .presets .btn { font-size: 20px; min-width: 100px; }
+  input, select { font-size: 20px; padding: 9px 12px; min-height: 48px; }
+  input { min-width: 110px; }
+  .setup-common, .opp-list label { font-size: 18px; }
+  .hint { font-size: 16px; }
+  .sum-grid .s .k { font-size: 14px; }
+  .sum-grid .s .v { font-size: 30px; }
+  .race-results { font-size: 19px; }
+  .hist-item .d { font-size: 15px; }
+  .hist-item .m { font-size: 20px; }
+  .hist-detail h3 { font-size: 21px; }
+  #ble-banner { font-size: 23px; bottom: 24px; max-width: 92vw; padding: 14px 22px; }
+  #ble-banner span { font-size: 17px; }
+  #ble-banner .ban-btns .btn.big { font-size: 24px; padding: 15px 28px; }
+  .ble-modal { font-size: 17px; }
+  table.kv.small td { font-size: 15px; }
+  .ble-log { font-size: 14px; }
+  #tv-hint { font-size: 20px; }
+}
+@media (min-width: 901px) and (max-width: 1599px) {
+  #live { grid-template-columns: minmax(0, 1fr) 30vw; }
+  #history { grid-template-columns: 36vw 1fr; }
+}
+/* phone / portrait: style.css stacks everything and scrolls */
+@media (max-width: 900px) {
+  .tile .value { font-size: 12vw; }
+  .tile.hero .value { font-size: 22vw; }
+}
