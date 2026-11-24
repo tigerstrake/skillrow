@@ -1108,4 +1108,16 @@
   connect();
   flushUnsaved();
   requestAnimationFrame(frame);
+
+  // test hook for simulator screenshots: ?demo=free|race|setup|history|done (use with ?fake=1; done rows 20 s, then ends + saves)
+  const demo = (/[?&]demo=(\w+)/.exec(location.search) || [])[1];
+  if (demo) {
+    setTimeout(() => {
+      if (demo === 'done') { startWorkout({ mode: 'free', splitLen: 100, targetPace: null }); setTimeout(() => finishWorkout(false), 20000); }
+      else if (demo === 'free') startWorkout({ mode: 'free', splitLen: 500, targetPace: null });
+      else if (demo === 'race') startWorkout({ mode: 'race', splitLen: 500, targetPace: null, goal: 2000, opponents: window.SkillRowRace ? window.SkillRowRace.presetOpponents(null).slice(0, 3) : [] });
+      else if (demo === 'setup') openSetup((/[?&]mode=(\w+)/.exec(location.search) || [])[1] || 'distance');
+      else if (demo === 'history') { showView('history'); setTimeout(() => { const it = $('.hist-item'); if (it) it.click(); }, 800); }
+    }, 1500);
+  }
 })();

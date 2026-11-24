@@ -4,7 +4,8 @@
  *    devices seen while scanning, log, Rescan / Forget rower / Heart rate on-off / Exit
  *  - bottom key legend (color keys)
  *  - screen saver off (webapis.appcommon) while the app is open
- *  - "Delete session" button in History detail (sessions live in localStorage on the TV) */
+ *  - "Delete session" button in History detail (sessions live in localStorage on the TV)
+ *  - shrinks a tile's number when it is wider than its tile (e.g. 1:02:34 or 10234 on a landscape phone) */
 (function (global) {
   'use strict';
   var doc = document, st = null, panelOpen = false;
@@ -42,6 +43,7 @@
       var b = doc.createElement('div'); b.id = 'ble-banner'; b.hidden = true; doc.body.appendChild(b);
       b.addEventListener('click', function (e) {
         var t = cur(), btn = e.target && e.target.closest && e.target.closest('button');
+        if (!btn && t && t.name === 'native') { openPanel(); return; }   // iOS app: tap the banner for details
         if (!btn || !t) return;
         if (btn.id === 'ban-connect' && t.connectRower) t.connectRower(false);
         else if (btn.id === 'ban-details') openPanel();
@@ -64,7 +66,7 @@
       Array.prototype.forEach.call(p.querySelectorAll('[data-close]'), function (c) { c.onclick = closePanel; });
       $('ble-rescan').onclick = function () { var t = cur(); if (t && t.rescan) t.rescan(); };
       $('ble-any').onclick = function () { var t = cur(); if (t && t.connectRower) t.connectRower(true); };
-      $('ble-disc').onclick = function () { var t = cur(); if (t && t.disconnect) t.disconnect(); };
+      $('ble-disc').onclick = function () { var t = cur(); if (t && t.forgetHr) t.forgetHr(); else if (t && t.disconnect) t.disconnect(); };
       $('ble-forget').onclick = function () { var t = cur(); if (t && t.forget) t.forget(); };
       $('ble-hr').onclick = function () {
         var t = cur(); if (!t) return;
@@ -87,9 +89,10 @@
     build();
     var s = st || { phase: 'init', text: 'Starting…' };
     var good = s.phase === 'streaming' || s.phase === 'bridge' && s.rowerConnected;
-    var cls = good ? 'on' : (s.phase === 'error' || s.phase === 'off' || s.phase === 'reconnecting' ? 'bad' : 'warn');
+    var cls = good ? 'on' : (s.phase === 'error' || s.phase === 'off' || s.phase === 'reconnecting' || s.phase === 'unauthorized' || s.phase === 'unsupported' ? 'bad' : 'warn');
     var shortTxt = { init: 'Bluetooth…', scanning: 'Searching rower', notfound: 'Rower not found', connecting: 'Connecting…', discovering: 'Connecting…',
-      streaming: 'Rower connected', reconnecting: 'Reconnecting…', error: 'Bluetooth error', off: 'Bluetooth off', bridge: 'Bridge', needgesture: 'Connect rower' }[s.phase] || s.phase;
+      streaming: 'Rower connected', reconnecting: 'Reconnecting…', error: 'Bluetooth error', off: 'Bluetooth off', bridge: 'Bridge', needgesture: 'Connect rower',
+      waiting: 'Waiting for rower', unauthorized: 'Bluetooth denied', unsupported: 'No Bluetooth' }[s.phase] || s.phase;
     if (s.transport === 'websocket') shortTxt = s.phase === 'streaming' ? 'Rower (bridge)' : (s.phase === 'error' ? 'Bridge offline' : 'Bridge: ' + shortTxt);
     if (s.transport === 'fake') shortTxt = 'Fake rower';
     var pillKey = cls + shortTxt;
@@ -100,28 +103,31 @@
       $('ble-txt').textContent = shortTxt;
     }
     var ban = $('ble-banner');
+    var nat = s.transport === 'native';
     var showBan = !good && s.transport !== 'fake';
     ban.hidden = !showBan;
     if (showBan) {
       var t = '<b>' + esc(s.text || shortTxt) + '</b>';
-      if (s.phase === 'scanning' || s.phase === 'notfound') t += '<span>Press Blue for details &middot; ' + esc(String(s.foundCount || 0)) + ' Bluetooth devices seen</span>';
+      if (nat && (s.phase === 'waiting' || s.phase === 'scanning')) t += '<span>It connects by itself as soon as the rower wakes up &middot; tap for details</span>';
+      else if (s.phase === 'scanning' || s.phase === 'notfound') t += '<span>Press Blue for details &middot; ' + esc(String(s.foundCount || 0)) + ' Bluetooth devices seen</span>';
       if (s.transport === 'webbluetooth') t += '<div class="ban-btns"><button class="btn primary big" id="ban-connect">' + (s.phase === 'needgesture' ? 'Connect rower' : 'Choose rower again') +
         '</button><button class="btn big" id="ban-details">Details</button></div>';
       if (ban.innerHTML !== t) ban.innerHTML = t;
       ban.className = cls;
     }
     if (!panelOpen) return;
-    var web = s.transport === 'webbluetooth', tz = s.transport === 'tizen-ble';
+    var web = s.transport === 'webbluetooth', tz = s.transport === 'tizen-ble';   // nat (iOS app) is set above
     var hrBtn = $('ble-hr');
     if (hrBtn) {
       if (web) hrBtn.textContent = s.hrPhase && s.hrPhase !== 'off' ? 'Disconnect HR (' + s.hrPhase + ')' : 'Connect heart rate';
       else hrBtn.textContent = 'Heart rate: ' + (s.hrEnabled ? 'on (' + (s.hrPhase || '') + ')' : 'off');
-      hrBtn.hidden = !(web || tz);
+      hrBtn.hidden = !(web || tz || nat);
     }
     $('ble-forget').hidden = !tz;
-    $('ble-any').hidden = !web; $('ble-disc').hidden = !web;
-    $('ble-rescan').textContent = web ? 'Connect rower' : 'Rescan';
-    $('ble-rescan').hidden = !(web || tz);
+    $('ble-any').hidden = !web; $('ble-disc').hidden = !(web || (nat && s.hrDevice));
+    $('ble-disc').textContent = nat ? 'Forget heart rate' : 'Disconnect';
+    $('ble-rescan').textContent = web ? 'Connect rower' : nat ? 'Use a different rower' : 'Rescan';
+    $('ble-rescan').hidden = !(web || tz || nat);
     $('ble-exit').hidden = !(global.SkillRowTV && global.SkillRowTV.isTV);
     var h = '<table class="kv">';
     function row(k, v) { h += '<tr><td>' + esc(k) + '</td><td>' + v + '</td></tr>'; }
@@ -130,6 +136,8 @@
     if (s.error) row('Last error', '<span class="bad">' + esc(s.error) + '</span>');
     if (s.device || s.address) row('Rower', esc((s.device || '') + ' ' + (s.address || '')));
     if (s.url) row('Bridge', esc(s.url));
+    if (nat) row('Bluetooth', esc(s.bt || ''));
+    if (s.deviceInfo && Object.keys(s.deviceInfo).length) row('Rower info', esc(Object.keys(s.deviceInfo).map(function (k) { return k + ' ' + s.deviceInfo[k]; }).join(' · ')));
     if (s.counts) row('Packets', 'rower ' + s.counts.rower + ' &middot; force ' + s.counts.force + ' &middot; strokes ' + s.counts.stroke +
       (s.counts.hr != null ? ' &middot; hr ' + s.counts.hr : '') + (s.counts.adv != null ? ' &middot; adverts ' + s.counts.adv : ''));
     if (s.lastAt) row('Last data', Math.round((Date.now() - s.lastAt) / 1000) + ' s ago');
@@ -186,8 +194,45 @@
     wrap.appendChild(b); box.appendChild(wrap);
   }
 
+  // ------------------------------------------------------------------ fit tile numbers to their width
+  // CSS sizes the numbers (vw / container units); this only shrinks one that still overflows. Re-measured only when
+  // the text length, the tile width or the layout changes, so it costs nothing per frame.
+  var fitGen = 0, fitQueued = false;
+  function fitValues() {
+    fitQueued = false;
+    var els = doc.querySelectorAll('#tiles .tile .value');
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i], cw = el.clientWidth;
+      if (!cw) { el._fitKey = null; continue; }   // hidden: retry when shown
+      var key = fitGen + '|' + el.textContent.length + '|' + cw;
+      if (el._fitKey === key) continue;
+      el.style.fontSize = '';
+      var sw = el.scrollWidth;
+      if (sw > cw + 1) el.style.fontSize = (parseFloat(global.getComputedStyle(el).fontSize) * cw / sw * 0.97).toFixed(1) + 'px';
+      el._fitKey = key;
+    }
+  }
+  function queueFit(relayout) {
+    if (relayout) fitGen++;
+    if (fitQueued) return;
+    fitQueued = true;
+    (global.requestAnimationFrame || setTimeout)(fitValues);
+  }
+  function initFit() {
+    var tiles = $('tiles');
+    if (!tiles) return;
+    global.addEventListener('resize', function () { queueFit(true); });
+    if (global.MutationObserver) {
+      new MutationObserver(function () { queueFit(false); }).observe(tiles, { childList: true, characterData: true, subtree: true });
+      var live = $('live');   // .racing switches the tile layout
+      if (live) new MutationObserver(function () { queueFit(true); }).observe(live, { attributes: true, attributeFilter: ['class', 'hidden'] });
+    }
+    if (global.ResizeObserver) new global.ResizeObserver(function () { queueFit(true); }).observe(tiles);
+    queueFit(true);
+  }
+
   function init() {
-    build(); platformInfo(); screenSaverOff(); render();
+    build(); platformInfo(); screenSaverOff(); render(); initFit();
     doc.addEventListener('visibilitychange', function () { if (doc.visibilityState === 'visible') screenSaverOff(); });
     if (global.MutationObserver) {
       var hd = $('hist-detail');

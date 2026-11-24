@@ -1,5 +1,6 @@
-/* Transport selection. ES5. Override with ?transport=tizen|webbluetooth|ws|fake.
+/* Transport selection. ES5. Override with ?transport=native|tizen|webbluetooth|ws|fake.
  *   ?fake=1 (or ?transport=fake)     -> fake rower that generates real FTMS byte packets (tests the parser path)
+ *   webkit.messageHandlers.skillrow  -> SkillRow iOS app, CoreBluetooth in Swift (transport-native.js); only inside the app
  *   window.tizen && tizen.bluetooth  -> Tizen BLE (transport-tizen.js)
  *   navigator.bluetooth              -> Web Bluetooth (transport-webbluetooth.js; Chrome, Edge, Bluefy on iOS)
  *   otherwise                        -> WebSocket to the Python bridge: ?ws=host:port, default location.host,
@@ -86,11 +87,13 @@
 
   function select() {
     var want = qs('transport') || (qs('fake') === '1' ? 'fake' : null);
-    var tr, tizenBt = false, webBt = false;
+    var tr, tizenBt = false, webBt = false, nativeBt = false;
+    try { nativeBt = !!(global.SkillRowNativeBLE && global.SkillRowNativeBLE.available()); } catch (e) { nativeBt = false; }
     try { tizenBt = typeof global.tizen !== 'undefined' && !!global.tizen.bluetooth; } catch (e) { tizenBt = false; }
     try { webBt = !!(global.navigator && global.navigator.bluetooth); } catch (e) { webBt = false; }
     if (want === 'fake') tr = new FakeTransport();
     else if (want === 'ws') tr = new WsTransport();
+    else if ((want === 'native' || !want) && nativeBt) tr = global.SkillRowNativeBLE.create();
     else if ((want === 'tizen' || (!want && tizenBt)) && global.SkillRowTizenBLE) tr = global.SkillRowTizenBLE.create();
     else if ((want === 'webbluetooth' || (!want && webBt)) && global.SkillRowWebBLE) tr = global.SkillRowWebBLE.create();
     else tr = new WsTransport();

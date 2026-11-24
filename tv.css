@@ -187,3 +187,66 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
   .tile .value { font-size: 12vw; }
   .tile.hero .value { font-size: 22vw; }
 }
+
+/* SkillRow iOS app (transport-native.js): no browser full-screen API, the app is already full screen */
+html.tr-native #btn-fs { display: none; }
+
+/* ---------- landscape phone (SkillRow iOS app lays out at ~1070-1160 x 600 CSS px, see WebViewController.designSize)
+ * and AirPlay mirroring of it to a 16:9 TV: short screen, so give the tiles the height, cap the side column, smaller
+ * labels, and size the numbers to their tile (container units; tv-ui.js shrinks any value that is still too wide). */
+@media (min-width: 901px) and (max-height: 680px) {
+  :root { --gap: 8px; }
+  html, body { font-size: 16px; }
+  #topbar { min-height: 52px; padding: 4px 14px; gap: 10px; }
+  .brand { font-size: 22px; }
+  .tab { font-size: 19px; padding: 7px 14px; }
+  .btn { min-height: 42px; padding: 8px 14px; font-size: 18px; }
+  .btn.icon { padding: 6px 12px; }
+  #live { grid-template-columns: minmax(0, 1fr) 280px; grid-template-rows: minmax(0, 2.7fr) minmax(0, 1fr); }
+  #tiles { grid-template-rows: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr); }
+  .tile { padding: 5px 12px 6px; }
+  .tile .label { font-size: 15px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: .04em; }
+  .tile .sub { font-size: 15px; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; }
+  .tile .value { font-size: 4.6vw; line-height: 1.02; }
+  .tile.hero .label { font-size: 18px; }
+  .tile.hero .value { font-size: 10vw; }
+  .tile.hero .sub { font-size: 22px; }
+  .panel { padding: 10px 14px; }
+  .remaining { font-size: 50px; }
+  .wo-head { font-size: 18px; }
+  .quick .btn.big { font-size: 19px; padding: 10px 16px; }
+  table.splits { font-size: 15px; }
+  .chart-box { padding: 5px 10px; }
+  .chart-title { font-size: 13px; }
+  /* race: race track on top, one row of tiles below (pace hero spans it), no charts */
+  #live.racing { grid-template-rows: minmax(0, 1.15fr) minmax(0, 1fr); grid-template-areas: "race side" "tiles side"; }
+  #live.racing #charts { display: none; }
+  #live.racing #tiles { grid-template-columns: 1.5fr repeat(3, minmax(0, 1fr)); }
+  #live.racing .tile .value { font-size: 3.6vw; }
+  #live.racing .tile.hero .value { font-size: 7vw; }
+  .modal { max-height: 96vh; padding: 12px 20px; }
+  .modal-head h2 { font-size: 24px; margin-bottom: 6px; }
+  .seg { margin-bottom: 8px; }
+  .seg button { min-height: 42px; padding: 8px 6px; font-size: 18px; }
+  .presets { margin: 4px 0; }
+  .presets .btn { font-size: 18px; }
+  .field { margin: 6px 0; }
+  input, select { min-height: 42px; font-size: 18px; padding: 6px 10px; }
+  .setup-common { margin-top: 8px; padding-top: 8px; }
+  .opp-list label { padding: 6px 10px; }
+  .opp-list input[type=checkbox] { min-width: 0; min-height: 0; }
+  .opp-list { max-height: 124px; }
+  /* keep Start / Cancel visible while the dialog body scrolls */
+  .modal-foot { margin-top: 8px; position: sticky; bottom: -12px; background: var(--panel); padding: 8px 0 10px; z-index: 1; }
+  #history { grid-template-columns: 330px 1fr; }
+  canvas.detail-chart { height: 180px; }
+  .sum-grid .s { padding: 6px 10px; }
+  .sum-grid .s .v { font-size: 26px; }
+}
+@supports (container-type: size) {
+  @media (min-width: 901px) and (max-height: 680px) {
+    /* cq units are relative to the tile's content box: height left for the number = minus label + sub lines */
+    .tile .value, #live.racing .tile .value { font-size: min(34cqw, 100cqh - 40px); }
+    .tile.hero .value, #live.racing .tile.hero .value { font-size: min(35cqw, 100cqh - 54px); }
+  }
+}
